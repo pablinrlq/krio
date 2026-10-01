@@ -1,0 +1,146 @@
+@import "tailwindcss";
+@import "@fontsource-variable/archivo/wdth.css";
+
+@theme {
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* Pretos com fundo de oliva */
+  --color-breu: #0b0d09;
+  --color-carvao: #12150f;
+  --color-grafite: #1a1f16;
+  --color-linha: #2b3324;
+
+  /* Verdes kiwi: da casca à polpa */
+  --color-musgo: #1f3a12;
+  --color-folha: #3d6b1f;
+  --color-kiwi: #a8e063;
+  --color-broto: #cbee96;
+  --color-polpa: #e6f5cc;
+  --color-creme: #f4faea;
+
+  /* Texto */
+  --color-nevoa: #f2f7ea;
+  --color-salvia: #a3b394;
+  --color-oliva: #3e4d33;
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@utility cond {
+  font-stretch: 66%;
+}
+
+@utility semi {
+  font-stretch: 84%;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-breu);
+    color: var(--color-nevoa);
+    scrollbar-color: var(--color-folha) var(--color-breu);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    margin: 0;
+    overflow-x: clip;
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    caret-color: var(--color-kiwi);
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-kiwi);
+    color: var(--color-breu);
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-breu);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-folha);
+    border-radius: 999px;
+    border: 3px solid var(--color-breu);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-kiwi);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-kiwi);
+    outline-offset: 3px;
+  }
+
+  .on-light {
+    caret-color: var(--color-breu);
+  }
+  .on-light :focus-visible {
+    outline-color: var(--color-breu);
+  }
+  .on-light ::selection {
+    background-color: var(--color-breu);
+    color: var(--color-kiwi);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  a {
+    text-underline-offset: 0.22em;
+  }
+
+  [id] {
+    scroll-margin-top: 4.5rem;
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee 38s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
