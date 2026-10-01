@@ -38,7 +38,7 @@ const CREATORS: {
   { nome: 'Rafa Lima', email: 'rafa@krio.demo', cidade: 'Contagem', uf: 'MG', nichos: ['Corporativo'], formatos: ['UGC'], idiomas: ['Português', 'Inglês'], linguagem: 'Claro e confiável', bio: 'Explico produto e serviço sem jargão.', redes: [['instagram', 'rafalima', 12600]] },
 ]
 
-async function main() {
+export async function semear() {
   await usuario(process.env.ADMIN_EMAIL ?? 'admin@krio.demo', 'Equipe KRIÔ', 'admin')
   const marca = await usuario('marca@krio.demo', 'Ana Souza', 'marca')
   await db.insert(schema.marcas).values({ usuarioId: marca.id, empresa: 'Verde Cosméticos', segmento: 'Beleza' }).onConflictDoNothing()
@@ -123,7 +123,6 @@ async function main() {
 
   console.log(`Pronto. Senha de todas as contas de demonstração: ${SENHA}`)
   console.log('admin@krio.demo · marca@krio.demo · duda@krio.demo (creator) · joana@krio.demo (em análise)')
-  process.exit(0)
 }
 
-main()
+if (process.argv[1]?.replace(/\\/g, '/').endsWith('server/seed.ts')) semear().then(() => process.exit(0))
