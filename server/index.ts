@@ -21,8 +21,29 @@ import { iniciarSincronizacao } from './social'
 
 const app = new Hono<Ambiente>()
 
-app.use('*', secureHeaders({ crossOriginResourcePolicy: 'same-origin', referrerPolicy: 'strict-origin-when-cross-origin' }))
-app.use('/api/*', csrf({ origin: (origem) => origem === env.urlBase || (!env.prod && origem.startsWith('http://localhost')) }))
+app.use(
+  '*',
+  secureHeaders({
+    crossOriginResourcePolicy: 'same-origin',
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    // Só vale em HTTPS; em http://IP-da-rede o navegador ignora e reclama.
+    crossOriginOpenerPolicy: env.urlBase.startsWith('https://') ? 'same-origin' : false,
+  }),
+)
+app.use(
+  '/api/*',
+  csrf({
+    origin: (origem, c) => {
+      if (origem === env.urlBase || (!env.prod && origem.startsWith('http://localhost'))) return true
+      // Mesma origem: a página foi servida por este mesmo servidor (localhost, rede local ou domínio).
+      try {
+        return new URL(origem).host === c.req.header('host')
+      } catch {
+        return false
+      }
+    },
+  }),
+)
 app.use('/api/*', bodyLimit({ maxSize: (env.limiteUploadMb + 5) * 1024 * 1024, onError: (c) => c.json({ erro: 'Arquivo grande demais.' }, 413) }))
 app.use('/api/*', carregarUsuario)
 

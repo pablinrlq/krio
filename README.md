@@ -15,15 +15,29 @@ Feito com React, TypeScript, Vite, Tailwind CSS 4, Motion e Lucide no navegador,
 
 Também: avisos em tempo real (sino + aviso na tela), e-mails de convite, match, lista pronta e aprovação, chat com arquivos (imagem, vídeo, áudio, PDF) em tempo real, exclusão de conta (LGPD), tokens das redes cifrados, sessões seguras, proteção contra CSRF e limite de tentativas de login.
 
-## Rodar no computador
+## Rodar no seu computador ou servidor local
+
+Precisa do [Node 22 ou mais novo](https://nodejs.org) e do Git.
 
 ```bash
+git clone https://github.com/pablinrlq/krio.git
+cd krio
 npm install
-npm run seed   # cria contas de demonstração
-npm run dev    # site em http://localhost:5173, API em :3000
+npm run local
 ```
 
-Sem `DATABASE_URL`, o banco roda embutido (PGlite) na pasta `data/`, sem instalar nada.
+Abra <http://localhost:3000>. Celular ou outro computador na mesma rede abrem pelo IP da máquina: `http://IP-DA-MAQUINA:3000` (no Windows, veja o IP com `ipconfig`; no Mac, em Ajustes › Wi-Fi › Detalhes).
+
+O `npm run local` compila o site, cria o banco embutido e as contas de demonstração (só na primeira vez) e sobe tudo numa porta só. Banco e arquivos ficam na pasta `data/`; apague essa pasta para começar do zero.
+
+Para deixar rodando sempre, inclusive depois de reiniciar a máquina (Mac e Linux):
+
+```bash
+npm install -g pm2
+pm2 start npm --name krio -- run local
+pm2 save
+pm2 startup   # siga o comando que ele mostrar
+```
 
 Contas de demonstração (senha `krio2026`):
 
@@ -31,6 +45,8 @@ Contas de demonstração (senha `krio2026`):
 - `marca@krio.demo`: marca com um pedido e a lista curta pronta
 - `duda@krio.demo`: creator no casting
 - `joana@krio.demo`: creator esperando avaliação
+
+Para mexer no código com recarga automática: `npm run dev` (site em :5173, API em :3000).
 
 ## Publicar no servidor da KRIÔ (VPS)
 

@@ -19,7 +19,7 @@ export async function criarSessao(c: Context, usuarioId: string) {
   const token = tokenAleatorio()
   const expiraEm = new Date(Date.now() + DURACAO)
   await db.insert(schema.sessoes).values({ id: sha256(token), usuarioId, expiraEm })
-  setCookie(c, COOKIE, token, { httpOnly: true, secure: env.prod, sameSite: 'Lax', path: '/', expires: expiraEm })
+  setCookie(c, COOKIE, token, { httpOnly: true, secure: env.urlBase.startsWith('https://'), sameSite: 'Lax', path: '/', expires: expiraEm })
 }
 
 export async function encerrarSessao(c: Context) {
@@ -44,7 +44,7 @@ export const carregarUsuario = createMiddleware<Ambiente>(async (c, next) => {
       if (linha.expiraEm.getTime() - Date.now() < DURACAO / 2) {
         const expiraEm = new Date(Date.now() + DURACAO)
         await db.update(schema.sessoes).set({ expiraEm }).where(eq(schema.sessoes.id, id))
-        setCookie(c, COOKIE, token, { httpOnly: true, secure: env.prod, sameSite: 'Lax', path: '/', expires: expiraEm })
+        setCookie(c, COOKIE, token, { httpOnly: true, secure: env.urlBase.startsWith('https://'), sameSite: 'Lax', path: '/', expires: expiraEm })
       }
     }
   }
