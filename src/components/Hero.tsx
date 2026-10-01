@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useInView, useReducedMotion, type PanInfo } from 'motion/react'
 import { ArrowRight, ChevronLeft, ChevronRight, Shuffle } from 'lucide-react'
 import { CREATORS, type Creator } from '../data'
-import { useBrief } from '../brief'
-import { BotaoLink } from './ui'
+import { Link } from 'react-router'
+import { useDestinos } from '../lib/destinos'
 
 // Posição das três fichas visíveis no baralho; o resto fica escondido atrás.
 const SLOTS = [
@@ -14,7 +14,7 @@ const SLOTS = [
 const ESCONDIDA = { x: 0, y: 52, rotate: 0, scale: 0.86, opacity: 0 }
 
 export function Hero() {
-  const { preencher } = useBrief()
+  const destinos = useDestinos()
   const reduzir = useReducedMotion()
   const [ordem, setOrdem] = useState(CREATORS.map((c) => c.id))
   const [tocou, setTocou] = useState(false)
@@ -86,12 +86,14 @@ export function Hero() {
             A KRIÔ conecta sua marca a creators selecionados e cuida da produção inteira: briefing, roteiro, gravação, edição e entrega. Um parceiro só, do começo ao arquivo final.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <BotaoLink href="#contato" icone={<ArrowRight className="size-[18px]" />} onClick={(e) => { e.preventDefault(); preencher({ perfil: 'marca' }) }}>
+            <Link to={destinos.marca()} className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-kiwi px-6 py-3 text-[16px] font-bold text-breu no-underline semi transition-[background-color,transform] duration-200 hover:bg-broto active:scale-[0.97]">
               Quero creators para a minha marca
-            </BotaoLink>
-            <BotaoLink href="#academy" variante="contorno" icone={<ArrowRight className="size-[18px]" />}>
+              <ArrowRight className="size-[18px] transition-transform duration-300 ease-expo group-hover:translate-x-0.5" aria-hidden="true" />
+            </Link>
+            <Link to={destinos.creator()} className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full border border-nevoa/35 px-6 py-3 text-[16px] font-bold text-nevoa no-underline semi transition-colors duration-200 hover:border-nevoa hover:bg-nevoa/5">
               Sou creator
-            </BotaoLink>
+              <ArrowRight className="size-[18px] transition-transform duration-300 ease-expo group-hover:translate-x-0.5" aria-hidden="true" />
+            </Link>
           </div>
           <p className="mt-10 text-[15px] font-semibold text-salvia semi">Casting · Produção · Studio · Academy</p>
         </div>
@@ -158,18 +160,23 @@ export function Hero() {
               <ChevronRight className="size-5" />
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => preencher({ perfil: 'marca', nicho: frente.nicho })}
-            className="mx-auto mt-4 flex min-h-11 items-center gap-2 text-[16px] font-bold text-kiwi underline decoration-kiwi/40 underline-offset-4 semi transition-colors hover:decoration-kiwi"
+          <Link
+            to={destinos.marca({ nicho: frente.nicho })}
+            className="mx-auto mt-4 flex w-fit min-h-11 items-center gap-2 text-[16px] font-bold text-kiwi underline decoration-kiwi/40 underline-offset-4 semi transition-colors hover:decoration-kiwi"
           >
             Quero um creator de {frente.nicho}
             <ArrowRight className="size-4" aria-hidden="true" />
-          </button>
+          </Link>
           <p className="sr-only" aria-live="polite">
             Match: {frente.nome}, {frente.nicho}
           </p>
-          <p className="mt-3 text-center text-[13px] text-salvia">Perfis ilustrativos. Arraste a ficha para o lado para ver a próxima.</p>
+          <p className="mt-3 text-center text-[13px] text-salvia">
+            Perfis ilustrativos. Arraste a ficha para o lado ou{' '}
+            <Link to="/creators" className="font-semibold text-kiwi underline decoration-kiwi/40 hover:decoration-kiwi">
+              veja o casting
+            </Link>
+            .
+          </p>
         </div>
       </div>
     </section>

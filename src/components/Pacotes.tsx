@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowRight, Check } from 'lucide-react'
 import { MODALIDADES, PACOTES, type Modalidade } from '../data'
-import { useBrief } from '../brief'
+import { useNavigate } from 'react-router'
+import { useDestinos } from '../lib/destinos'
 
 export function Pacotes() {
-  const { preencher } = useBrief()
+  const destinos = useDestinos()
+  const navegar = useNavigate()
   const [modalidade, setModalidade] = useState<Modalidade>('UGC')
   const [foco, setFoco] = useState('Growth')
 
@@ -72,7 +74,7 @@ export function Pacotes() {
                 <div className="px-6 pb-6">
                   <button
                     type="button"
-                    onClick={() => preencher({ perfil: 'marca', pacote: p.nome, modalidade })}
+                    onClick={() => navegar(destinos.marca({ pacote: p.nome, modalidade }))}
                     className={`group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 text-[16px] font-bold semi transition-colors ${
                       on ? 'bg-kiwi text-breu hover:bg-broto' : 'border border-nevoa/25 text-nevoa hover:border-kiwi hover:text-kiwi'
                     }`}
