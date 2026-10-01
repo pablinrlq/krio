@@ -187,8 +187,10 @@ export const mensagens = pgTable(
     arquivoId: text('arquivo_id'),
     statusEntrega: text('status_entrega').$type<StatusEntrega>(),
     criadoEm: criadoEm(),
+    // Muda quando a entrega é aprovada ou recebe pedido de ajuste.
+    atualizadoEm: timestamp('atualizado_em', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('mensagens_conversa_idx').on(t.conversaId, t.criadoEm)],
+  (t) => [index('mensagens_conversa_idx').on(t.conversaId, t.criadoEm), index('mensagens_atualizado_idx').on(t.atualizadoEm)],
 )
 
 export const leituras = pgTable(
@@ -213,6 +215,8 @@ export const arquivos = pgTable('arquivos', {
   tipo: text('tipo').notNull(),
   tamanho: integer('tamanho').notNull(),
   publico: boolean('publico').notNull().default(false),
+  // Conteúdo em base64 quando o servidor não tem disco próprio (Vercel).
+  dados: text('dados'),
   criadoEm: criadoEm(),
 })
 

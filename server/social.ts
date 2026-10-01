@@ -290,17 +290,20 @@ export async function sincronizar(linha: typeof schema.redes.$inferSelect) {
   }
 }
 
-// Atualiza uma vez por dia cada rede conectada.
+// Atualiza as redes que não são sincronizadas há mais de um dia.
+export async function sincronizarPendentes() {
+  const ontem = new Date(Date.now() - 24 * 3600 * 1000)
+  const pendentes = await db
+    .select()
+    .from(schema.redes)
+    .where(and(isNotNull(schema.redes.tokenAcesso), or(isNull(schema.redes.sincronizadoEm), lt(schema.redes.sincronizadoEm, ontem))))
+    .limit(50)
+  for (const r of pendentes) await sincronizar(r)
+  return pendentes.length
+}
+
+// Servidor próprio: verifica de hora em hora. Na Vercel quem chama é o Cron.
 export function iniciarSincronizacao() {
-  const rodar = async () => {
-    const ontem = new Date(Date.now() - 24 * 3600 * 1000)
-    const pendentes = await db
-      .select()
-      .from(schema.redes)
-      .where(and(isNotNull(schema.redes.tokenAcesso), or(isNull(schema.redes.sincronizadoEm), lt(schema.redes.sincronizadoEm, ontem))))
-      .limit(50)
-    for (const r of pendentes) await sincronizar(r)
-  }
-  setTimeout(rodar, 30_000)
-  setInterval(rodar, 60 * 60 * 1000)
+  setTimeout(sincronizarPendentes, 30_000)
+  setInterval(sincronizarPendentes, 60 * 60 * 1000)
 }
