@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useScroll, useSpring } from 'motion/react'
 import { ArrowRight, Menu, X } from 'lucide-react'
+import { Link } from 'react-router'
+import { inicioDoPapel, useSessao } from '../lib/sessao'
 import { Logo } from './ui'
 
 const LINKS = [
@@ -12,6 +14,7 @@ const LINKS = [
 ]
 
 export function Header() {
+  const { usuario } = useSessao()
   const [aberto, setAberto] = useState(false)
   const [rolou, setRolou] = useState(false)
   const [ativo, setAtivo] = useState('')
@@ -79,13 +82,28 @@ export function Header() {
         </ul>
 
         <div className="flex items-center gap-2">
-          <a
-            href="#contato"
-            className="hidden min-h-11 items-center gap-2 rounded-full bg-kiwi px-5 text-[15px] font-bold text-breu no-underline semi transition-colors hover:bg-broto sm:inline-flex"
-          >
-            Pedir proposta
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </a>
+          {usuario ? (
+            <Link
+              to={inicioDoPapel(usuario.papel)}
+              className="hidden min-h-11 items-center gap-2 rounded-full bg-kiwi px-5 text-[15px] font-bold text-breu no-underline semi transition-colors hover:bg-broto sm:inline-flex"
+            >
+              Meu painel
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          ) : (
+            <>
+              <Link to="/entrar" className="hidden min-h-11 items-center rounded-full px-4 text-[15px] font-semibold text-nevoa no-underline transition-colors hover:text-kiwi sm:inline-flex">
+                Entrar
+              </Link>
+              <Link
+                to="/cadastro"
+                className="hidden min-h-11 items-center gap-2 rounded-full bg-kiwi px-5 text-[15px] font-bold text-breu no-underline semi transition-colors hover:bg-broto sm:inline-flex"
+              >
+                Criar conta
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </>
+          )}
           <button
             type="button"
             className="inline-flex size-11 items-center justify-center rounded-full border border-linha text-nevoa transition-colors hover:border-kiwi hover:text-kiwi lg:hidden"
@@ -137,14 +155,18 @@ export function Header() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.35 }}
             >
-              <a
-                href="#contato"
-                onClick={() => setAberto(false)}
+              <Link
+                to={usuario ? inicioDoPapel(usuario.papel) : '/cadastro'}
                 className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-kiwi text-[18px] font-bold text-breu no-underline semi"
               >
-                Pedir proposta
+                {usuario ? 'Meu painel' : 'Criar conta'}
                 <ArrowRight className="size-5" aria-hidden="true" />
-              </a>
+              </Link>
+              {!usuario && (
+                <Link to="/entrar" className="mt-3 flex min-h-14 w-full items-center justify-center rounded-full border border-nevoa/30 text-[18px] font-bold text-nevoa no-underline semi">
+                  Entrar
+                </Link>
+              )}
             </motion.div>
           </motion.div>
         )}

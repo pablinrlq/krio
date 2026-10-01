@@ -2,11 +2,13 @@ import { useRef } from 'react'
 import { motion, useScroll, useSpring } from 'motion/react'
 import { ArrowUpRight, GraduationCap } from 'lucide-react'
 import { ACADEMY } from '../data'
-import { useBrief } from '../brief'
+import { useNavigate } from 'react-router'
+import { useDestinos } from '../lib/destinos'
 import { Botao } from './ui'
 
 export function Academy() {
-  const { preencher } = useBrief()
+  const destinos = useDestinos()
+  const navegar = useNavigate()
   const trilha = useRef<HTMLOListElement>(null)
   const { scrollYProgress } = useScroll({ target: trilha, offset: ['start 85%', 'end 55%'] })
   const avanco = useSpring(scrollYProgress, { stiffness: 120, damping: 28 })
@@ -40,10 +42,10 @@ export function Academy() {
         </ol>
 
         <div className="mt-16 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Botao variante="escuro" icone={<GraduationCap className="size-[18px]" />} onClick={() => preencher({ perfil: 'creator', interesse: 'Academy' })}>
+          <Botao variante="escuro" icone={<GraduationCap className="size-[18px]" />} onClick={() => navegar(destinos.creator())}>
             Quero entrar na Academy
           </Botao>
-          <Botao variante="contorno-escuro" icone={<ArrowUpRight className="size-[18px]" />} onClick={() => preencher({ perfil: 'creator', interesse: 'Casting' })}>
+          <Botao variante="contorno-escuro" icone={<ArrowUpRight className="size-[18px]" />} onClick={() => navegar(destinos.creator())}>
             Já sou creator: enviar portfólio
           </Botao>
         </div>

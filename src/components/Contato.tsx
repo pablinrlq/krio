@@ -1,8 +1,12 @@
 import { useEffect, useId, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Check, ChevronDown, Copy, Send } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Copy, Send } from 'lucide-react'
 import { NICHOS, PACOTES, type Modalidade } from '../data'
-import { useBrief, type Interesse, type Perfil } from '../brief'
+import { Link } from 'react-router'
+import { useDestinos } from '../lib/destinos'
+
+type Perfil = 'marca' | 'creator'
+type Interesse = 'Academy' | 'Casting'
 import { linkWhatsApp } from '../config'
 import { WhatsIcon } from './ui'
 
@@ -48,21 +52,10 @@ function montarMensagem(f: Form) {
 }
 
 export function Contato() {
-  const { pedido, versao } = useBrief()
+  const destinos = useDestinos()
   const [form, setForm] = useState<Form>(INICIAL)
   const [erros, setErros] = useState<Partial<Record<keyof Form, string>>>({})
   const [aviso, setAviso] = useState('')
-  const [destaque, setDestaque] = useState(false)
-
-  // Recebe o que a pessoa escolheu no hero, nos pacotes ou na Academy.
-  useEffect(() => {
-    if (!versao) return
-    setForm((f) => ({ ...f, ...Object.fromEntries(Object.entries(pedido).filter(([, v]) => v !== undefined)) }))
-    setErros({})
-    setDestaque(true)
-    const t = setTimeout(() => setDestaque(false), 1400)
-    return () => clearTimeout(t)
-  }, [versao, pedido])
 
   useEffect(() => {
     if (!aviso) return
@@ -115,7 +108,23 @@ export function Contato() {
             <br />
             quem cria.
           </h2>
-          <p className="mt-8 max-w-[30rem] text-[19px] leading-relaxed">Conte o que você precisa. A KRIÔ responde com creators compatíveis e uma proposta.</p>
+          <p className="mt-8 max-w-[30rem] text-[19px] leading-relaxed">Crie sua conta e faça tudo pela plataforma: briefing, escolha do creator, conversa e aprovação dos vídeos.</p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link to={destinos.marca()} className="group inline-flex min-h-14 items-center justify-center gap-2.5 rounded-full bg-breu px-7 text-[17px] font-bold text-nevoa no-underline semi transition-[background-color,transform] hover:bg-musgo active:scale-[0.97]">
+              Criar conta de marca
+              <ArrowRight className="size-5 transition-transform duration-300 ease-expo group-hover:translate-x-0.5" aria-hidden="true" />
+            </Link>
+            <Link to={destinos.creator()} className="group inline-flex min-h-14 items-center justify-center gap-2.5 rounded-full border border-breu/45 px-7 text-[17px] font-bold text-breu no-underline semi transition-colors hover:border-breu hover:bg-breu/5">
+              Sou creator
+              <ArrowRight className="size-5 transition-transform duration-300 ease-expo group-hover:translate-x-0.5" aria-hidden="true" />
+            </Link>
+          </div>
+          <p className="mt-4 text-[15px]">
+            Já tem conta?{' '}
+            <Link to="/entrar" className="font-bold text-breu underline">
+              Entrar
+            </Link>
+          </p>
 
           <div className="mt-10 hidden lg:block">
             <p className="text-[14px] font-semibold semi">Prévia da mensagem</p>
@@ -126,11 +135,10 @@ export function Contato() {
         <motion.form
           noValidate
           onSubmit={enviar}
-          animate={destaque ? { scale: [1, 1.015, 1] } : {}}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className={`rounded-[20px] bg-breu p-5 text-nevoa shadow-[0_30px_60px_-28px_rgba(11,13,9,0.8)] transition-[box-shadow] sm:p-8 ${destaque ? 'ring-4 ring-breu/25' : ''}`}
+          className="rounded-[20px] bg-breu p-5 text-nevoa shadow-[0_30px_60px_-28px_rgba(11,13,9,0.8)] sm:p-8"
           style={{ caretColor: '#A8E063' }}
         >
+          <p className="mb-6 cond text-[30px] font-black leading-none text-nevoa">Prefere conversar antes?</p>
           <fieldset>
             <legend className="text-[15px] font-semibold text-salvia">Você é</legend>
             <div role="radiogroup" aria-label="Você é" className="mt-2 grid grid-cols-2 rounded-full bg-grafite p-1">
