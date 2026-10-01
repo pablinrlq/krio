@@ -15,7 +15,7 @@ type Conversa = {
 }
 
 export function Chat({ conversaId, altura = 'h-[min(72dvh,720px)]' }: { conversaId: string; altura?: string }) {
-  const { usuario, toast } = useSessao()
+  const { usuario, toast, config } = useSessao()
   const { dados, erro, carregando, recarregar, setDados } = useDados<Conversa>(`/conversas/${conversaId}`)
   const [texto, setTexto] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -35,14 +35,14 @@ export function Chat({ conversaId, altura = 'h-[min(72dvh,720px)]' }: { conversa
   }, [dados?.mensagens.length, conversaId])
 
   useEventos((e) => {
-    if (e.tipo === 'mensagem' && e.conversaId === conversaId) {
-      setDados((d) => (d && !d.mensagens.some((m) => m.id === e.mensagem.id) ? { ...d, mensagens: [...d.mensagens, e.mensagem] } : d))
-      requestAnimationFrame(() => rolarAoFim())
-    }
-    if (e.tipo === 'entrega' && e.conversaId === conversaId) {
-      setDados((d) => (d ? { ...d, mensagens: d.mensagens.map((m) => (m.id === e.mensagemId ? { ...m, statusEntrega: e.status } : m)) } : d))
-      recarregar()
-    }
+    if (e.tipo !== 'mensagem' || e.conversaId !== conversaId) return
+    const nova = !dados?.mensagens.some((m) => m.id === e.mensagem.id)
+    // Mensagem nova entra no fim; uma já existente (entrega aprovada ou com ajuste) é atualizada.
+    setDados((d) =>
+      d ? { ...d, mensagens: d.mensagens.some((m) => m.id === e.mensagem.id) ? d.mensagens.map((m) => (m.id === e.mensagem.id ? e.mensagem : m)) : [...d.mensagens, e.mensagem] } : d,
+    )
+    if (nova) requestAnimationFrame(() => rolarAoFim())
+    if (e.mensagem.tipo === 'sistema') recarregar()
   })
 
   const enviar = async (ev?: FormEvent) => {
@@ -127,7 +127,19 @@ export function Chat({ conversaId, altura = 'h-[min(72dvh,720px)]' }: { conversa
           )}
         </AnimatePresence>
         <div className="flex items-end gap-2">
-          <input ref={inputArquivo} type="file" className="sr-only" accept="image/*,video/*,audio/*,application/pdf" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} tabIndex={-1} />
+          <input
+            ref={inputArquivo}
+            type="file"
+            className="sr-only"
+            accept="image/*,video/*,audio/*,application/pdf"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null
+              e.target.value = ''
+              if (f && f.size > config.limiteUploadMb * 1024 * 1024) return toast(`O arquivo passa de ${config.limiteUploadMb} MB. Envie um menor ou mande o link.`, { tom: 'erro' })
+              setArquivo(f)
+            }}
+            tabIndex={-1}
+          />
           <button type="button" aria-label="Anexar arquivo" onClick={() => inputArquivo.current?.click()} className="inline-flex size-12 shrink-0 items-center justify-center rounded-full border border-linha text-salvia transition-colors hover:border-kiwi hover:text-kiwi">
             <Paperclip className="size-5" />
           </button>

@@ -12,7 +12,8 @@
     "db:gerar": "drizzle-kit generate",
     "seed": "tsx server/seed.ts",
     "preview": "vite preview",
-    "local": "npm run build && tsx server/local.ts"
+    "local": "npm run build && tsx server/local.ts",
+    "build:vercel": "npm run build && node scripts/vercel-build.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -41,7 +42,8 @@
     "drizzle-kit": "^0.31.11",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
-    "vite": "^8.3.2"
+    "vite": "^8.3.2",
+    "esbuild": "^0.28.2"
   },
   "engines": {
     "node": ">=22"

@@ -71,7 +71,7 @@ const Divisor = () => (
 )
 
 export function Entrar() {
-  const { usuario, recarregar, google } = useSessao()
+  const { usuario, recarregar, google, config } = useSessao()
   const [params] = useSearchParams()
   const navegar = useNavigate()
   const [email, setEmail] = useState('')
@@ -113,6 +113,32 @@ export function Entrar() {
           <ArrowRight className="size-5" aria-hidden="true" />
         </Botao>
       </form>
+      {config.modoTeste && (
+        <div className="mt-8 rounded-[14px] border border-kiwi/40 bg-kiwi/5 p-4 text-[14px]">
+          <p className="font-bold text-kiwi semi">Contas de teste (senha krio2026)</p>
+          <ul className="mt-2 grid gap-1">
+            {[
+              ['marca@krio.demo', 'Marca'],
+              ['duda@krio.demo', 'Creator'],
+              ['admin@krio.demo', 'Equipe KRIÔ'],
+            ].map(([e, p]) => (
+              <li key={e}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(e)
+                    setSenha('krio2026')
+                  }}
+                  className="flex w-full min-h-10 items-center justify-between rounded-[8px] px-2 text-left hover:bg-nevoa/5"
+                >
+                  <span className="text-nevoa">{e}</span>
+                  <span className="text-salvia">{p}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className="mt-8 text-center text-[15px] text-salvia">
         Ainda não tem conta?{' '}
         <Link to="/cadastro" className="font-semibold text-kiwi underline decoration-kiwi/40 hover:decoration-kiwi">

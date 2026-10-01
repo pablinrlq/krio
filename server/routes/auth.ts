@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { and, eq, isNull, lt } from 'drizzle-orm'
 import { z } from 'zod'
-import { db, schema } from '../db'
+import { bancoTemporario, db, schema } from '../db'
 import { env } from '../env'
 import { contarTentativa, criarSessao, encerrarSessao, exigir, limparTentativas, usuarioDe, type Ambiente } from '../auth'
 import { conferirSenha, hashSenha, tokenAleatorio } from '../lib/cripto'
@@ -77,18 +77,19 @@ rotasAuth.post('/sair', async (c) => {
 
 rotasAuth.get('/eu', async (c) => {
   const u = c.get('usuario')
-  if (!u) return c.json({ usuario: null })
+  if (!u) return c.json({ usuario: null, google: !!env.google.id, limiteUploadMb: env.limiteUploadMb, bancoTemporario, modoTeste: env.modoTeste })
   const naoLidos = await db.$count(schema.avisos, and(eq(schema.avisos.usuarioId, u.id), isNull(schema.avisos.lidoEm)))
-  return c.json({ usuario: u, avisos: naoLidos, google: !!env.google.id })
+  return c.json({ usuario: u, avisos: naoLidos, google: !!env.google.id, limiteUploadMb: env.limiteUploadMb, bancoTemporario, modoTeste: env.modoTeste })
 })
 
-rotasAuth.get('/config', (c) => c.json({ google: !!env.google.id }))
+rotasAuth.get('/config', (c) => c.json({ google: !!env.google.id, limiteUploadMb: env.limiteUploadMb, bancoTemporario, modoTeste: env.modoTeste }))
 
 // Exclusão de conta (LGPD): apaga a pessoa e tudo que é dela.
 rotasAuth.delete('/conta', exigir(), async (c) => {
   const u = usuarioDe(c)
   if (u.papel === 'admin') throw new HTTPException(400, { message: 'Contas de administrador são removidas por outro administrador.' })
   const meus = await db.select({ caminho: schema.arquivos.caminho }).from(schema.arquivos).where(eq(schema.arquivos.donoId, u.id))
+  await db.delete(schema.arquivos).where(eq(schema.arquivos.donoId, u.id))
   await db.delete(schema.usuarios).where(eq(schema.usuarios.id, u.id))
   await Promise.all(meus.map((a) => apagarArquivo(a.caminho)))
   await encerrarSessao(c)

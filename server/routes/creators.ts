@@ -144,7 +144,10 @@ rotasCreators.post('/favoritos/:id', exigir('marca'), async (c) => {
 export const rotasArquivos = new Hono<Ambiente>()
 
 rotasArquivos.get('/:id', async (c) => {
-  const [a] = await db.select().from(schema.arquivos).where(eq(schema.arquivos.id, c.req.param('id')))
+  const [a] = await db
+    .select({ id: schema.arquivos.id, caminho: schema.arquivos.caminho, nome: schema.arquivos.nome, tipo: schema.arquivos.tipo, tamanho: schema.arquivos.tamanho, publico: schema.arquivos.publico, donoId: schema.arquivos.donoId })
+    .from(schema.arquivos)
+    .where(eq(schema.arquivos.id, c.req.param('id')))
   if (!a) throw naoEncontrado('Arquivo')
   if (!a.publico) {
     const u = c.get('usuario')
@@ -157,7 +160,7 @@ rotasArquivos.get('/:id', async (c) => {
     if (!ok) throw proibido()
   }
   const faixa = lerFaixa(c.req.header('range'), a.tamanho)
-  const { tamanho, corpo: stream } = await abrirArquivo(a.caminho, faixa ?? undefined)
+  const { tamanho, corpo: stream } = await abrirArquivo(a, faixa ?? undefined)
   const baixar = c.req.query('baixar') !== undefined
   return new Response(stream, {
     status: faixa ? 206 : 200,

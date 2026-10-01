@@ -1,13 +1,11 @@
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
-import { streamSSE } from 'hono/streaming'
 import { and, desc, eq, gt, inArray, isNotNull, isNull, ne, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, schema } from '../db'
 import { exigir, usuarioDe, type Ambiente, type Usuario } from '../auth'
 import { ErroArquivo, salvarArquivo } from '../lib/arquivos'
 import { avisar } from '../lib/avisos'
-import { emitirParaUsuario, ouvirUsuario } from '../lib/eventos'
 import { corpo, naoEncontrado, proibido } from '../lib/util'
 
 export const rotasChat = new Hono<Ambiente>()
@@ -58,7 +56,9 @@ async function serializar(ms: MensagemRow[]) {
   const us = autores.length
     ? await db.select({ id: schema.usuarios.id, nome: schema.usuarios.nome, papel: schema.usuarios.papel }).from(schema.usuarios).where(inArray(schema.usuarios.id, autores))
     : []
-  const as = arqs.length ? await db.select().from(schema.arquivos).where(inArray(schema.arquivos.id, arqs)) : []
+  const as = arqs.length
+    ? await db.select({ id: schema.arquivos.id, nome: schema.arquivos.nome, tipo: schema.arquivos.tipo, tamanho: schema.arquivos.tamanho }).from(schema.arquivos).where(inArray(schema.arquivos.id, arqs))
+    : []
   return ms.map((m) => {
     const a = as.find((x) => x.id === m.arquivoId)
     return {
@@ -77,9 +77,8 @@ async function serializar(ms: MensagemRow[]) {
 export async function publicarMensagem(valores: typeof schema.mensagens.$inferInsert, avisoTexto?: string) {
   const [m] = await db.insert(schema.mensagens).values(valores).returning()
   const [s] = await serializar([m])
-  const ids = await participantes(m.conversaId)
-  for (const id of ids) emitirParaUsuario(id, { tipo: 'mensagem', conversaId: m.conversaId, mensagem: s })
   if (avisoTexto) {
+    const ids = await participantes(m.conversaId)
     const d = await dadosConversa(m.conversaId)
     for (const id of ids) {
       if (id === valores.autorId) continue
@@ -216,7 +215,7 @@ rotasChat.post('/mensagens/:id/entrega', exigir('marca', 'admin'), async (c) => 
   if (acao === 'ajuste' && !comentario) throw new HTTPException(400, { message: 'Conte o que precisa ajustar.' })
 
   const status = acao === 'aprovar' ? 'aprovado' : 'ajuste'
-  await db.update(schema.mensagens).set({ statusEntrega: status }).where(eq(schema.mensagens.id, m.id))
+  await db.update(schema.mensagens).set({ statusEntrega: status, atualizadoEm: new Date() }).where(eq(schema.mensagens.id, m.id))
   let texto: string
   if (acao === 'aprovar') {
     texto = `${u.nome} aprovou a entrega.${comentario ? ` "${comentario}"` : ''}`
@@ -227,7 +226,6 @@ rotasChat.post('/mensagens/:id/entrega', exigir('marca', 'admin'), async (c) => 
     const extra = usadas > d.pedido.rodadasTotal ? ' Esta rodada passa do que o pacote inclui; a KRIÔ vai combinar com a marca.' : ''
     texto = `${u.nome} pediu ajuste (rodada ${usadas} de ${d.pedido.rodadasTotal}): "${comentario}".${extra}`
   }
-  for (const id of await participantes(m.conversaId)) emitirParaUsuario(id, { tipo: 'entrega', conversaId: m.conversaId, mensagemId: m.id, status })
   await publicarMensagem({ conversaId: m.conversaId, autorId: null, tipo: 'sistema', texto }, acao === 'aprovar' ? `Entrega aprovada em "${d.pedido.titulo}"` : `Ajuste pedido em "${d.pedido.titulo}"`)
   return c.json({ ok: true, status })
 })
@@ -260,35 +258,46 @@ rotasChat.post('/avisos/lidos', exigir(), async (c) => {
   return c.json({ ok: true })
 })
 
-// ---------- Tempo real (Server-Sent Events) ----------
+// ---------- Novidades (tempo real por consulta curta) ----------
+// O navegador pergunta a cada poucos segundos o que mudou desde a última vez.
+// Funciona igual na Vercel (funções sem conexão aberta), na VPS e no computador.
 
-rotasChat.get('/eventos', exigir(), (c) => {
+rotasChat.get('/novidades', exigir(), async (c) => {
   const u = usuarioDe(c)
-  c.header('x-accel-buffering', 'no')
-  return streamSSE(c, async (stream) => {
-    const fila: unknown[] = []
-    let acordar: (() => void) | null = null
-    const parar = ouvirUsuario(u.id, (e) => {
-      fila.push(e)
-      acordar?.()
-    })
-    stream.onAbort(parar)
-    await stream.writeSSE({ event: 'pronto', data: '{}' })
-    while (!stream.aborted) {
-      if (!fila.length) {
-        // Espera um evento ou manda um "ping" a cada 25 s para manter a conexão viva.
-        await new Promise<void>((r) => {
-          acordar = r
-          setTimeout(r, 25_000)
-        })
-        acordar = null
-      }
-      if (!fila.length) {
-        await stream.writeSSE({ event: 'ping', data: '{}' })
-        continue
-      }
-      while (fila.length) await stream.writeSSE({ event: 'evento', data: JSON.stringify(fila.shift()) })
-    }
-    parar()
-  })
+  const [{ agora }] = await db.select({ agora: sql<string>`now()` }).from(sql`(select 1) as x`)
+  const pedido = c.req.query('desde')
+  // Sem cursor (primeira consulta), só devolve o relógio do servidor.
+  if (!pedido || Number.isNaN(Date.parse(pedido))) return c.json({ agora, mensagens: [], avisos: [] })
+  // Margem de 5 s para não perder nada gravado no limite; o navegador ignora repetidos.
+  const desde = new Date(Date.parse(pedido) - 5000)
+
+  const base = db
+    .select({ id: schema.conversas.id })
+    .from(schema.conversas)
+    .innerJoin(schema.pedidos, eq(schema.pedidos.id, schema.conversas.pedidoId))
+    .leftJoin(schema.candidatos, eq(schema.candidatos.id, schema.conversas.candidatoId))
+  const visiveis =
+    u.papel === 'admin'
+      ? undefined
+      : u.papel === 'marca'
+        ? await base.where(eq(schema.pedidos.marcaId, u.id))
+        : await base.where(and(eq(schema.candidatos.creatorId, u.id), isNotNull(schema.candidatos.matchEm)))
+  const ids = visiveis?.map((v) => v.id)
+
+  const ms =
+    ids && !ids.length
+      ? []
+      : await db
+          .select()
+          .from(schema.mensagens)
+          .where(and(gt(schema.mensagens.atualizadoEm, desde), ids ? inArray(schema.mensagens.conversaId, ids) : undefined))
+          .orderBy(schema.mensagens.criadoEm)
+          .limit(200)
+  const avisos = await db
+    .select({ id: schema.avisos.id, texto: schema.avisos.texto, link: schema.avisos.link })
+    .from(schema.avisos)
+    .where(and(eq(schema.avisos.usuarioId, u.id), gt(schema.avisos.criadoEm, desde)))
+    .orderBy(schema.avisos.criadoEm)
+    .limit(20)
+  return c.json({ agora, mensagens: await serializar(ms), avisos })
 })

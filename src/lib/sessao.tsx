@@ -3,14 +3,17 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Bell, X } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { api } from './api'
-import type { Evento, Usuario } from './tipos'
+import type { Evento, Mensagem, Usuario } from './tipos'
 
 type Toast = { id: number; texto: string; link?: string | null; tom?: 'ok' | 'erro' }
+type Config = { google: boolean; limiteUploadMb: number; bancoTemporario: boolean; modoTeste: boolean }
+type Novidades = { agora: string; mensagens: Mensagem[]; avisos: { id: string; texto: string; link: string | null }[] }
 
 type Ctx = {
   usuario: Usuario | null | undefined
   avisos: number
   google: boolean
+  config: Config
   recarregar: () => Promise<void>
   sair: () => Promise<void>
   zerarAvisos: () => void
@@ -19,11 +22,12 @@ type Ctx = {
 }
 
 const SessaoContext = createContext<Ctx | null>(null)
+const PADRAO: Config = { google: false, limiteUploadMb: 200, bancoTemporario: false, modoTeste: false }
 
 export function SessaoProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null | undefined>(undefined)
   const [avisos, setAvisos] = useState(0)
-  const [google, setGoogle] = useState(false)
+  const [config, setConfig] = useState<Config>(PADRAO)
   const [toasts, setToasts] = useState<Toast[]>([])
   const ouvintes = useRef(new Set<(e: Evento) => void>())
   const navegar = useNavigate()
@@ -36,10 +40,10 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
 
   const recarregar = useCallback(async () => {
     try {
-      const r = await api<{ usuario: Usuario | null; avisos?: number; google?: boolean }>('/auth/eu')
+      const r = await api<{ usuario: Usuario | null; avisos?: number } & Partial<Config>>('/auth/eu')
       setUsuario(r.usuario)
       setAvisos(r.avisos ?? 0)
-      setGoogle(!!r.google)
+      setConfig({ ...PADRAO, ...Object.fromEntries(Object.entries(r).filter(([k]) => k in PADRAO)) })
     } catch {
       setUsuario(null)
     }
@@ -49,20 +53,53 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
     recarregar()
   }, [recarregar])
 
-  // Tempo real: uma conexão SSE por pessoa logada.
+  // "Tempo real" por consulta curta: a cada 3 s com a aba aberta, a cada 20 s em
+  // segundo plano. Funciona igual na Vercel, na VPS e no computador.
   useEffect(() => {
     if (!usuario) return
-    const es = new EventSource('/api/eventos')
-    es.addEventListener('evento', (m) => {
-      const e = JSON.parse((m as MessageEvent).data) as Evento
-      if (e.tipo === 'aviso') {
-        setAvisos((n) => n + 1)
-        toast(e.texto, { link: e.link })
+    let cursor: string | null = null
+    let parado = false
+    let rodando = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const vistos = new Set<string>()
+    const emitir = (e: Evento) => ouvintes.current.forEach((fn) => fn(e))
+
+    const rodar = async () => {
+      if (parado || rodando) return
+      rodando = true
+      clearTimeout(timer)
+      try {
+        const r = await api<Novidades>(`/novidades${cursor ? `?desde=${encodeURIComponent(cursor)}` : ''}`)
+        cursor = r.agora
+        for (const m of r.mensagens) {
+          const chave = `${m.id}:${m.statusEntrega ?? ''}`
+          if (vistos.has(chave)) continue
+          vistos.add(chave)
+          emitir({ tipo: 'mensagem', conversaId: m.conversaId, mensagem: m })
+        }
+        for (const a of r.avisos) {
+          if (vistos.has(a.id)) continue
+          vistos.add(a.id)
+          setAvisos((n) => n + 1)
+          toast(a.texto, { link: a.link })
+          emitir({ tipo: 'aviso', texto: a.texto, link: a.link })
+        }
+      } catch {
+        // Sem conexão: tenta de novo no próximo ciclo.
+      } finally {
+        rodando = false
+        if (!parado) timer = setTimeout(rodar, document.hidden ? 20_000 : 3_000)
       }
-      ouvintes.current.forEach((fn) => fn(e))
-    })
-    return () => es.close()
-  }, [usuario, toast])
+    }
+    rodar()
+    const aoVoltar = () => !document.hidden && rodar()
+    document.addEventListener('visibilitychange', aoVoltar)
+    return () => {
+      parado = true
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', aoVoltar)
+    }
+  }, [usuario?.id, toast])
 
   const sair = useCallback(async () => {
     await api('/auth/sair', { method: 'POST' }).catch(() => {})
@@ -78,7 +115,7 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <SessaoContext.Provider value={{ usuario, avisos, google, recarregar, sair, zerarAvisos: () => setAvisos(0), ouvir, toast }}>
+    <SessaoContext.Provider value={{ usuario, avisos, google: config.google, config, recarregar, sair, zerarAvisos: () => setAvisos(0), ouvir, toast }}>
       {children}
       <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[80] flex flex-col items-center gap-2 px-4 md:bottom-6 md:items-end md:px-6" aria-live="polite">
         <AnimatePresence>

@@ -123,7 +123,7 @@ const MSG_REDE: Record<string, string> = {
 }
 
 export function PerfilCreator() {
-  const { toast } = useSessao()
+  const { toast, config } = useSessao()
   const [params, setParams] = useSearchParams()
   const { dados, erro, carregando, recarregar } = useDados<MinhaFicha>('/creators/eu')
   const disponiveis = useDados<Record<Rede, boolean>>('/redes/disponiveis')
@@ -201,6 +201,7 @@ export function PerfilCreator() {
 
   const trocarFoto = async (arq?: File) => {
     if (!arq) return
+    if (arq.size > config.limiteUploadMb * 1024 * 1024) return toast(`A foto passa de ${config.limiteUploadMb} MB. Envie uma menor.`, { tom: 'erro' })
     const fd = new FormData()
     fd.set('foto', arq)
     try {

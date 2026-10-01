@@ -43,7 +43,7 @@ export function Protegido({ papeis }: { papeis?: Papel[] }) {
 }
 
 function Shell() {
-  const { usuario, sair } = useSessao()
+  const { usuario, sair, config } = useSessao()
   const menu = MENUS[usuario!.papel]
   const local = useLocation()
 
@@ -87,6 +87,11 @@ function Shell() {
       </aside>
 
       <div className="min-w-0">
+        {config.bancoTemporario && (
+          <p className="on-light bg-broto px-4 py-2 text-center text-[13px] font-semibold text-breu md:px-8">
+            Ambiente de teste: os dados voltam ao exemplo de tempos em tempos.
+          </p>
+        )}
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b border-linha bg-breu/95 px-4 md:px-8">
           <Link to="/" className="text-[28px] text-nevoa no-underline lg:hidden" aria-label="KRIÔ, ir para o site">
             <Logo />
