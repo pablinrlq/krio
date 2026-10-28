@@ -1,23 +1,66 @@
-# KRIÔ · site e plataforma
+<div align="center">
 
-Site da KRIÔ, a creator company, e a plataforma onde o trabalho acontece: marcas mandam briefing, a KRIÔ monta a lista curta, a marca passa as fichas e, quando o creator aceita, dá **MATCH** e abre a conversa entre marca, creator e KRIÔ.
+# KRIÔ
 
-Feito com React, TypeScript, Vite, Tailwind CSS 4, Motion e Lucide no navegador, e Node (Hono) + PostgreSQL (Drizzle) no servidor. Roda num servidor próprio, sem serviços de terceiros obrigatórios.
+**Site e plataforma de casting para uma creator company.**
 
-## O que tem
+Marcas mandam o briefing, a curadoria monta a lista curta, a marca passa as fichas
+e, quando o creator aceita, dá **match** e abre a conversa entre os três.
 
-| Quem | O que faz |
+![React](https://img.shields.io/badge/React-20232a?style=flat-square&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![Tailwind CSS 4](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Hono](https://img.shields.io/badge/Hono-E36002?style=flat-square&logo=hono&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+
+<br/>
+
+<img src="docs/home.png" alt="Página inicial da KRIÔ" width="100%"/>
+
+</div>
+
+## Sobre
+
+A KRIÔ conecta marcas a creators selecionados e cuida da produção inteira: briefing,
+roteiro, gravação, edição e entrega. Construí o site institucional e a plataforma
+onde esse fluxo acontece, do cadastro ao arquivo final, com front e back no mesmo repositório.
+
+O coração do produto é o **baralho**: a marca recebe a lista curta montada pela curadoria
+e passa as fichas dos creators, arrastando ou pelos botões. Quando a marca escolhe e o
+creator aceita o convite, abre um chat em tempo real entre marca, creator e equipe.
+
+<img src="docs/creators.png" alt="Catálogo de creators" width="100%"/>
+
+## Funcionalidades
+
+| Perfil | O que faz |
 | --- | --- |
-| **Marca** | Cria conta (e-mail ou Google), faz o briefing em 4 passos, passa as fichas da lista curta (arrastar ou botões), conversa, aprova entregas ou pede ajuste (conta as rodadas), favorita creators. |
-| **Creator** | Cria conta, monta a ficha (foto, nichos, formatos, idiomas, apresentação, vídeo), conecta Instagram, TikTok e YouTube pelo login oficial, manda a ficha para a curadoria, aceita convites, conversa e envia entregas. |
-| **Equipe KRIÔ** | Painel com números, fila de avaliação de creators (aprovar, recusar, nota interna), quadro de pedidos por etapa, lista curta com sugestões automáticas, envio da lista para a marca, todas as conversas e marcas. |
-| **Visitante** | Site público, catálogo de creators com ficha resumida, termos e privacidade. |
+| **Marca** | Cria conta (e-mail ou Google), faz o briefing em 4 passos, passa as fichas da lista curta, conversa, aprova entregas ou pede ajuste (com contagem de rodadas) e favorita creators |
+| **Creator** | Monta a ficha (foto, nichos, formatos, idiomas, vídeo), conecta Instagram, TikTok e YouTube pelo login oficial, envia para a curadoria, aceita convites e envia entregas |
+| **Equipe** | Painel com indicadores, fila de avaliação de creators, quadro de pedidos por etapa, lista curta com sugestões automáticas e acesso a todas as conversas |
+| **Visitante** | Site público, catálogo de creators com ficha resumida, termos e privacidade |
 
-Também: avisos em tempo real (sino + aviso na tela), e-mails de convite, match, lista pronta e aprovação, chat com arquivos (imagem, vídeo, áudio, PDF) em tempo real, exclusão de conta (LGPD), tokens das redes cifrados, sessões seguras, proteção contra CSRF e limite de tentativas de login.
+E por baixo:
 
-## Rodar no seu computador ou servidor local
+- Chat com arquivos (imagem, vídeo, áudio, PDF) e avisos em tempo real
+- E-mails transacionais de convite, match, lista pronta e aprovação
+- Números das redes sociais atualizados todo dia
+- Exclusão de conta (LGPD), tokens das redes cifrados, proteção contra CSRF e limite de tentativas de login
 
-Precisa do [Node 22 ou mais novo](https://nodejs.org) e do Git.
+## Stack
+
+| Camada | Ferramentas |
+| --- | --- |
+| Front-end | React, TypeScript, Vite, Tailwind CSS 4, Motion, Lucide |
+| Back-end | Node.js com Hono, PostgreSQL com Drizzle ORM |
+| Infra | Docker Compose, Caddy (HTTPS automático), backup diário; também roda na Vercel com Neon |
+| Integrações | OAuth do Google, Instagram, TikTok e YouTube |
+
+## Rodando localmente
+
+Precisa do Node 22+.
 
 ```bash
 git clone https://github.com/pablinrlq/krio.git
@@ -26,76 +69,41 @@ npm install
 npm run local
 ```
 
-Abra <http://localhost:3000>. Celular ou outro computador na mesma rede abrem pelo IP da máquina: `http://IP-DA-MAQUINA:3000` (no Windows, veja o IP com `ipconfig`; no Mac, em Ajustes › Wi-Fi › Detalhes).
+Abra <http://localhost:3000>. Na primeira vez o comando compila o site, cria um banco
+embutido e as contas de demonstração (senha `krio2026`):
 
-O `npm run local` compila o site, cria o banco embutido e as contas de demonstração (só na primeira vez) e sobe tudo numa porta só. Banco e arquivos ficam na pasta `data/`; apague essa pasta para começar do zero.
+| Conta | Papel |
+| --- | --- |
+| `admin@krio.demo` | equipe KRIÔ |
+| `marca@krio.demo` | marca com um pedido e a lista curta pronta |
+| `duda@krio.demo` | creator no casting |
+| `joana@krio.demo` | creator aguardando avaliação |
 
-Para deixar rodando sempre, inclusive depois de reiniciar a máquina (Mac e Linux):
+Para desenvolver com recarga automática: `npm run dev` (site em `:5173`, API em `:3000`).
 
-```bash
-npm install -g pm2
-pm2 start npm --name krio -- run local
-pm2 save
-pm2 startup   # siga o comando que ele mostrar
-```
-
-Contas de demonstração (senha `krio2026`):
-
-- `admin@krio.demo`: equipe KRIÔ
-- `marca@krio.demo`: marca com um pedido e a lista curta pronta
-- `duda@krio.demo`: creator no casting
-- `joana@krio.demo`: creator esperando avaliação
-
-Para mexer no código com recarga automática: `npm run dev` (site em :5173, API em :3000).
-
-## Publicar na Vercel (fase de teste)
-
-1. Abra <https://vercel.com/new>, importe o repositório `pablinrlq/krio` e clique em **Deploy** sem mudar nada. O site já sobe em modo de demonstração (os dados voltam ao exemplo quando a função esfria).
-2. Para guardar os dados de verdade: no projeto da Vercel, **Storage › Create Database › Neon (Postgres) › Connect**. Depois, em **Deployments**, clique em **Redeploy**. No primeiro acesso o banco é criado sozinho e ganha as contas de demonstração.
-3. A tela de entrar mostra as contas de teste (senha `krio2026`).
-
-Na Vercel: arquivos do chat e fotos vão até 4 MB e ficam guardados no banco; mensagens e avisos chegam a cada 3 segundos; as redes sociais são atualizadas uma vez por dia pelo Vercel Cron.
-
-**Chaves de teste no código:** `server/env.ts` (bloco `TESTE`) tem a chave de sessão e a senha do admin fixas. Antes de abrir para clientes reais, defina `APP_SECRET`, `ADMIN_EMAIL` e `ADMIN_PASSWORD` em **Settings › Environment Variables** na Vercel e apague esses valores do código.
-
-## Publicar no servidor da KRIÔ (VPS)
-
-Qualquer VPS com Docker serve (2 GB de RAM bastam no começo).
-
-1. Aponte o domínio (registro A) para o IP do servidor.
-2. No servidor:
-   ```bash
-   git clone https://github.com/pablinrlq/krio.git && cd krio
-   cp .env.example .env   # preencha DOMAIN, POSTGRES_PASSWORD, APP_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
-   docker compose up -d --build
-   ```
-3. Pronto: HTTPS automático, banco PostgreSQL, arquivos em volume próprio e backup diário em `./backups` (14 dias).
-
-Para atualizar: `git pull && docker compose up -d --build`. As migrações do banco rodam sozinhas ao subir.
-
-## Conectar Google, Instagram, TikTok e YouTube
-
-Cada rede precisa de um app de desenvolvedor no nome da KRIÔ. Os endereços de retorno estão no `.env.example`.
-
-- **Google (login + YouTube):** console.cloud.google.com → Credenciais → ID do cliente OAuth (aplicativo da Web). Ative a YouTube Data API v3.
-- **Instagram:** developers.facebook.com → app do tipo Empresa → produto "Instagram" com login do Instagram, permissão `instagram_business_basic`. Exige conta Meta Business verificada e revisão do app. Só conecta contas profissionais (Criador ou Comercial).
-- **TikTok:** developers.tiktok.com → app com Login Kit, escopos `user.info.basic`, `user.info.profile`, `user.info.stats` e `video.list`. Passa por revisão.
-
-Enquanto uma rede não está configurada, o botão "Conectar" avisa que está em liberação. Os números das redes se atualizam sozinhos uma vez por dia.
-
-## Dados de contato do site
-
-O formulário "Prefere conversar antes?" monta a mensagem e abre o WhatsApp. Preencha `src/config.ts` com o número, o Instagram e o e-mail da KRIÔ. Campos vazios ficam escondidos no rodapé.
+Publicação em VPS ou na Vercel e configuração das redes sociais: [docs/IMPLANTACAO.md](docs/IMPLANTACAO.md).
 
 ## Estrutura
 
-- `src/components`: seções do site público
-- `src/pages` e `src/app`: telas da plataforma (acesso, marca, creator, admin, chat, baralho)
-- `server/routes`: API (contas, creators, redes, pedidos, chat, admin)
-- `server/db/schema.ts`: tabelas; `npm run db:gerar` cria a migração depois de mudar o schema
-- `server/social.ts`: integrações com Instagram, TikTok e YouTube
+```
+src/
+├── components/   seções do site público
+├── pages/        telas da plataforma (acesso, marca, creator, admin)
+└── app/          chat e baralho
+server/
+├── routes/       API: contas, creators, redes, pedidos, chat, admin
+├── db/schema.ts  tabelas (Drizzle)
+└── social.ts     integrações com Instagram, TikTok e YouTube
+```
 
-## Observações
+## Decisões técnicas
 
-- As fichas do hero do site e as contas `@krio.demo` são ilustrativas.
-- Termos de uso e política de privacidade são uma versão inicial e precisam de revisão jurídica.
+- **Um servidor só.** Hono serve a API e o build do Vite na mesma porta, o que simplifica deploy e cookies de sessão.
+- **Sem dependência obrigatória de terceiros.** Banco, arquivos e tempo real rodam no próprio servidor; na Vercel o mesmo código cai para polling e arquivos no banco.
+- **Migrações automáticas** ao subir o container, então atualizar é `git pull` e `docker compose up -d --build`.
+
+---
+
+<div align="center">
+<sub>Feito por <a href="https://github.com/pablinrlq">Pablo Moises</a> · as fichas e contas de demonstração são ilustrativas</sub>
+</div>
